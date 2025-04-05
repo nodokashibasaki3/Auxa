@@ -1,4 +1,4 @@
-### Auxa App
+# Auxa App
 
 ## Smart Lighting for Sensory Comfort
 
@@ -32,6 +32,6 @@ Auxa is a smart lighting application designed to create personalized sensory env
 - Receive gentle notifications when stress levels rise
 - Calibrate to your personal baseline for accurate stress detection
 
-# License
+### License
 Auxa is proprietary software. All rights reserved.
 
