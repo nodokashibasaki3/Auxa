@@ -1,4 +1,4 @@
-***Auxa App***
+###Auxa App
 
 **Smart Lighting for Sensory Comfort**
 
