@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en" >
+<head>
+  <meta charset="UTF-8">
+  <title>Auxa UI Mockup</title>
+  <link rel="stylesheet" href="./style.css">
+
+</head>
+<body>
+<!-- partial:index.partial.html -->
+<div id="auxa-mockup" class="bg-gray-100 p-4 flex flex-col items-center">
+  <div class="w-full max-w-md">
+    <h1 class="text-center text-3xl font-bold text-indigo-600 mb-6">Auxa App Mockup</h1>
+    
+    <!-- Screen Navigation -->
+    <div class="flex justify-center mb-6">
+      <div class="bg-white rounded-lg shadow-md p-1 flex">
+        <button class="px-4 py-2 rounded-md screen-nav-btn active" data-screen="onboarding">Onboarding</button>
+        <button class="px-4 py-2 rounded-md screen-nav-btn" data-screen="home">Home</button>
+        <button class="px-4 py-2 rounded-md screen-nav-btn" data-screen="dashboard">Dashboard</button>
+        <button class="px-4 py-2 rounded-md screen-nav-btn" data-screen="integration">Integration</button>
+      </div>
+    </div>
+    
+    <!-- Mockup Container -->
+    <div class="flex flex-col space-y-8">
+      
+      <!-- Onboarding Survey -->
+      <div class="bg-white p-6 rounded-xl shadow-md screen-content active" id="onboarding-screen">
+        <h2 class="text-xl font-bold mb-4">Onboarding Survey</h2>
+        <div class="border-l-4 border-indigo-500 pl-4 py-1 mb-4">
+          <p class="text-sm text-gray-600">Create personalized light settings based on sensory preferences</p>
+        </div>
+        
+        <div class="space-y-4">
+          <div>
+            <label class="block text-sm font-medium mb-1">Light sensitivity level</label>
+            <input type="range" min="1" max="5" value="3" class="w-full" id="sensitivity-slider">
+            <div class="flex justify-between text-xs text-gray-500">
+              <span>Not sensitive</span>
+              <span>Very sensitive</span>
+            </div>
+          </div>
+          
+          <div>
+            <label class="block text-sm font-medium mb-2">Preferred light tones</label>
+            <div class="flex space-x-4">
+              <div class="w-12 h-12 rounded-full bg-amber-200 ring-2 ring-indigo-500 color-option" data-color="warm"></div>
+              <div class="w-12 h-12 rounded-full bg-blue-200 color-option" data-color="cool"></div>
+              <div class="w-12 h-12 rounded-full bg-purple-200 color-option" data-color="purple"></div>
+            </div>
+          </div>
+          
+          <button class="w-full bg-indigo-600 text-white py-2 rounded-lg mt-6" id="continue-btn">Continue</button>
+        </div>
+      </div>
+      
+      <!-- Home Screen -->
+      <div class="bg-white p-6 rounded-xl shadow-md screen-content hidden" id="home-screen">
+        <h2 class="text-xl font-bold mb-4">Home Screen</h2>
+        <div class="border-l-4 border-indigo-500 pl-4 py-1 mb-4">
+          <p class="text-sm text-gray-600">Check in mood and apply light settings</p>
+        </div>
+        
+        <div class="mb-4">
+          <label class="block text-sm font-medium mb-2">Current Mood</label>
+          <div class="flex justify-between">
+            <div class="flex flex-col items-center mood-option" data-mood="calm">
+              <div class="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">😊</div>
+              <span class="text-xs mt-1">Calm</span>
+            </div>
+            <div class="flex flex-col items-center mood-option" data-mood="focused">
+              <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">🧠</div>
+              <span class="text-xs mt-1">Focused</span>
+            </div>
+            <div class="flex flex-col items-center mood-option" data-mood="neutral">
+              <div class="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center">😐</div>
+              <span class="text-xs mt-1">Neutral</span>
+            </div>
+            <div class="flex flex-col items-center mood-option" data-mood="stressed">
+              <div class="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center">😖</div>
+              <span class="text-xs mt-1">Stressed</span>
+            </div>
+          </div>
+        </div>
+        
+        <div>
+          <label class="block text-sm font-medium mb-2">Light Modes</label>
+          <div class="space-y-2">
+            <div class="p-3 bg-amber-50 rounded-lg flex items-center light-mode" data-mode="calm">
+              <div class="w-8 h-8 bg-amber-200 rounded-full flex items-center justify-center mr-3">☀️</div>
+              <div class="flex-grow">
+                <div class="text-sm font-medium">Calm Mode</div>
+                <div class="text-xs text-gray-500">Warm, low intensity</div>
+              </div>
+              <button class="text-indigo-600 text-sm apply-btn">Apply</button>
+            </div>
+            
+            <div class="p-3 bg-blue-50 rounded-lg flex items-center light-mode" data-mode="focus">
+              <div class="w-8 h-8 bg-blue-200 rounded-full flex items-center justify-center mr-3">💡</div>
+              <div class="flex-grow">
+                <div class="text-sm font-medium">Focus Mode</div>
+                <div class="text-xs text-gray-500">Neutral, medium brightness</div>
+              </div>
+              <button class="text-indigo-600 text-sm apply-btn">Apply</button>
+            </div>
+            
+            <div class="p-3 bg-purple-50 rounded-lg flex items-center light-mode" data-mode="relax">
+              <div class="w-8 h-8 bg-purple-200 rounded-full flex items-center justify-center mr-3">🌙</div>
+              <div class="flex-grow">
+                <div class="text-sm font-medium">Relax Mode</div>
+                <div class="text-xs text-gray-500">Warm, dim lighting</div>
+              </div>
+              <button class="text-indigo-600 text-sm apply-btn">Apply</button>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Add this right after the "Light Modes" section in the home-screen div -->
+        <div class="mt-6">
+          <div class="flex justify-between items-center mb-2">
+            <label class="block text-sm font-medium">Auxa™ Wearable</label>
+            <span class="text-xs py-1 px-2 bg-green-100 text-green-800 rounded-full">Connected</span>
+          </div>
+
+          <div class="p-3 bg-indigo-50 rounded-lg">
+            <div class="flex items-center mb-2">
+              <div class="w-8 h-8 bg-indigo-200 rounded-full flex items-center justify-center mr-3">💓</div>
+              <div>
+                <div class="text-sm font-medium">Current HR: <span id="home-hr">72</span> BPM</div>
+                <div class="text-xs text-gray-500">Auto-adjust lights based on heart rate</div>
+              </div>
+            </div>
+
+            <div class="flex mt-3">
+              <label class="relative inline-flex items-center cursor-pointer">
+                <input type="checkbox" value="" class="sr-only peer" id="auto-toggle" checked>
+                <div class="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-indigo-600"></div>
+                <span class="ml-3 text-xs text-gray-700">Auto Mode</span>
+              </label>
+            </div>
+          </div>
+        </div>  
+      </div>
+      
+      <!-- Dashboard -->
+      <div class="bg-white p-6 rounded-xl shadow-md screen-content hidden" id="dashboard-screen">
+        <h2 class="text-xl font-bold mb-4">Dashboard</h2>
+        <div class="border-l-4 border-indigo-500 pl-4 py-1 mb-4">
+          <p class="text-sm text-gray-600">Track mood history and light settings</p>
+        </div>
+        
+        <div class="mb-4">
+          <label class="block text-sm font-medium mb-2">Current Setting</label>
+          <div class="p-3 bg-amber-50 rounded-lg" id="current-mode">
+            <div class="flex items-center mb-2">
+              <div class="w-6 h-6 bg-amber-200 rounded-full flex items-center justify-center mr-2">☀️</div>
+              <div class="text-sm font-medium">Calm Mode Active</div>
+            </div>
+            <div class="flex justify-between text-xs text-gray-600">
+              <span>Brightness: 30%</span>
+              <span>Color: Warm</span>
+            </div>
+          </div>
+        </div>
+        
+        <div>
+          <label class="block text-sm font-medium mb-2">7-Day Mood History</label>
+          <div class="p-4 bg-gray-50 rounded-lg">
+            <div class="h-24 flex items-end space-x-2">
+              <div class="flex-1 flex flex-col items-center">
+                <div class="w-full h-12 bg-green-400 rounded-t"></div>
+                <span class="text-xs mt-1">M</span>
+              </div>
+              <div class="flex-1 flex flex-col items-center">
+                <div class="w-full h-16 bg-green-400 rounded-t"></div>
+                <span class="text-xs mt-1">T</span>
+              </div>
+              <div class="flex-1 flex flex-col items-center">
+                <div class="w-full h-10 bg-yellow-400 rounded-t"></div>
+                <span class="text-xs mt-1">W</span>
+              </div>
+              <div class="flex-1 flex flex-col items-center">
+                <div class="w-full h-6 bg-red-400 rounded-t"></div>
+                <span class="text-xs mt-1">T</span>
+              </div>
+              <div class="flex-1 flex flex-col items-center">
+                <div class="w-full h-16 bg-green-400 rounded-t"></div>
+                <span class="text-xs mt-1">F</span>
+              </div>
+              <div class="flex-1 flex flex-col items-center">
+                <div class="w-full h-20 bg-green-400 rounded-t"></div>
+                <span class="text-xs mt-1">S</span>
+              </div>
+              <div class="flex-1 flex flex-col items-center">
+                <div class="w-full h-14 bg-green-400 rounded-t"></div>
+                <span class="text-xs mt-1">S</span>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Add this inside the dashboard-screen div, before the closing </div> tag -->
+<div class="mt-6">
+  <label class="block text-sm font-medium mb-2">Auxa™ Wearable Status</label>
+  <div class="p-4 bg-indigo-50 rounded-lg flex items-start">
+    <div class="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center mr-3">
+      <span>💓</span>
+    </div>
+    <div class="flex-grow">
+      <div class="flex justify-between items-center mb-2">
+        <span class="text-sm font-medium">Heart Rate Monitoring</span>
+        <span class="text-xs py-1 px-2 bg-green-100 text-green-800 rounded-full" id="connection-status">Connected</span>
+      </div>
+      
+      <div class="flex items-end space-x-1 mb-2">
+        <span class="text-2xl font-bold text-indigo-700" id="current-hr">72</span>
+        <span class="text-xs text-gray-600 mb-1">BPM</span>
+      </div>
+      
+      <div class="w-full bg-gray-200 rounded-full h-1 mb-1">
+        <div class="bg-indigo-600 h-1 rounded-full w-3/5" id="hr-indicator"></div>
+      </div>
+      
+      <div class="flex justify-between text-xs text-gray-500">
+        <span>Resting (60)</span>
+        <span>Active (120)</span>
+      </div>
+      
+      <div class="mt-3 text-xs text-gray-600 flex items-center">
+        <span id="stress-indicator" class="w-2 h-2 rounded-full bg-green-500 mr-1"></span>
+        <span id="stress-status">Normal stress levels</span>
+      </div>
+    </div>
+  </div>
+  
+  <div class="mt-4">
+    <div class="flex justify-between items-center mb-2">
+      <label class="block text-sm font-medium">Heart Rate History (Last Hour)</label>
+      <div class="text-xs text-indigo-600 cursor-pointer" id="auto-mode-toggle">Auto Mode: ON</div>
+    </div>
+    <div class="p-4 bg-gray-50 rounded-lg">
+      <div class="h-24 relative" id="hr-chart">
+        <!-- SVG line chart will be rendered here -->
+        <svg width="100%" height="100%" viewBox="0 0 300 100" preserveAspectRatio="none">
+          <path d="M0,50 C20,40 40,45 60,35 C80,25 100,50 120,55 C140,60 160,45 180,50 C200,55 220,65 240,70 C260,75 280,50 300,55" 
+               stroke="#818CF8" 
+               stroke-width="2" 
+               fill="none" />
+           
+          <!-- Point showing current HR -->
+          <circle cx="300" cy="55" r="3" fill="#4F46E5" />
+        </svg>
+        
+        <!-- Vertical light adjustment markers -->
+        <div class="absolute top-0 right-12 h-full border-l border-indigo-300 border-dashed flex flex-col items-center justify-center">
+          <div class="absolute -left-16 bg-purple-100 text-purple-800 text-xs px-2 py-1 rounded">
+            Relax Mode
+          </div>
+        </div>
+        
+        <div class="absolute top-0 left-1/3 h-full border-l border-amber-300 border-dashed flex flex-col items-center justify-center">
+          <div class="absolute -left-16 bg-amber-100 text-amber-800 text-xs px-2 py-1 rounded">
+            Calm Mode
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <div class="flex items-center justify-between mt-4">
+    <div class="text-xs text-gray-600">
+      <span class="text-amber-600">●</span> Light changes
+      <span class="ml-2 text-indigo-600">●</span> Heart rate
+    </div>
+    <div>
+      <button class="px-3 py-1 bg-indigo-600 text-white text-xs rounded mr-2" id="calibrate-btn">Calibrate</button>
+      <button class="px-3 py-1 bg-white border border-gray-300 text-xs rounded" id="settings-btn">Settings</button>
+    </div>
+  </div>
+</div>
+          
+        </div>
+      </div>
+      
+      <!-- Smart Home Integration -->
+      <div class="bg-white p-6 rounded-xl shadow-md screen-content hidden" id="integration-screen">
+        <h2 class="text-xl font-bold mb-4">Smart Home Integration</h2>
+        <div class="border-l-4 border-indigo-500 pl-4 py-1 mb-4">
+          <p class="text-sm text-gray-600">Connect to smart lighting systems</p>
+        </div>
+        
+        <div class="space-y-3">
+          <div class="p-3 bg-gray-50 rounded-lg flex items-center">
+            <div class="w-10 h-10 flex items-center justify-center mr-3">💡</div>
+            <div class="flex-grow">
+              <div class="text-sm font-medium">Philips Hue</div>
+              <div class="text-xs text-gray-500">Connect bridge</div>
+            </div>
+            <button class="px-3 py-1 bg-indigo-600 text-white text-xs rounded connect-btn" data-device="hue">Connect</button>
+          </div>
+          
+          <div class="p-3 bg-gray-50 rounded-lg flex items-center">
+            <div class="w-10 h-10 flex items-center justify-center mr-3">🏠</div>
+            <div class="flex-grow">
+              <div class="text-sm font-medium">Google Home</div>
+              <div class="text-xs text-gray-500">Link account</div>
+            </div>
+            <button class="px-3 py-1 bg-indigo-600 text-white text-xs rounded connect-btn" data-device="google">Connect</button>
+          </div>
+          
+          <div id="connected-status" class="mt-4 hidden">
+            <div class="border-l-4 border-green-500 pl-4 py-2 bg-green-50 rounded-md">
+              <p class="text-sm text-green-700" id="status-message">Device connected successfully!</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<!-- partial -->
+  <script  src="./script.js"></script>
+
+</body>
+</html>
