@@ -1,7 +1,5 @@
 # Auxa App
 
-## Smart Lighting for Sensory Comfort
-
 Auxa is a smart lighting application designed to create personalized sensory environments for individuals with autism and sensory processing differences. By combining user preferences with biometric data from wearable devices, Auxa automatically adjusts lighting to improve comfort, reduce anxiety, and enhance well-being.
 
 ## Core Features
