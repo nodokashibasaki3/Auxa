@@ -24,7 +24,6 @@
 - **Bluetooth & IoT Integration (In Progress)**  
   Future support for smart devices to align your environment with your schedule.
 
----
 
 ## 🛠️ Tech Stack
 
@@ -32,7 +31,6 @@
 - **Backend:** Firebase (Authentication + Firestore)  
 - **Other:** Bluetooth Web API (in development), Google Calendar Sync (planned)
 
----
 
 ## 🚀 Getting Started
 
