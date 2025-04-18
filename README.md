@@ -4,7 +4,7 @@
 
 Auxa is built to empower neurodivergent individuals by providing them with greater environmental control through an intuitive, accessible, and intelligent interface.
 
-## 🌈 Why Auxa?
+## Why Auxa?
 
 Many individuals on the autism spectrum experience sensory sensitivities, especially to light. Traditional lighting systems lack personalization and flexibility. Auxa bridges this gap by offering a smart, responsive system that adapts to individual preferences and needs—promoting comfort, productivity, and emotional well-being.
 
