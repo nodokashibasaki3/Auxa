@@ -1,34 +1,38 @@
 # Auxa
 
-**Auxa** is a smart habit-building and scheduling platform designed to help users take control of their routines using AI. Whether you're a student, professional, or goal-setter, Auxa helps you structure time, build habits, and reach milestones—intuitively and intelligently.
+**Auxa** is an adaptive lighting control app designed to personalize light environments for individuals with autism. The app supports mood regulation, sensory comfort, and daily functioning by using user feedback and behavioral patterns to dynamically adjust lighting in real-time.
+
+Auxa is built to empower neurodivergent individuals by providing them with greater environmental control through an intuitive, accessible, and intelligent interface.
+
+## 🌈 Why Auxa?
+
+Many individuals on the autism spectrum experience sensory sensitivities, especially to light. Traditional lighting systems lack personalization and flexibility. Auxa bridges this gap by offering a smart, responsive system that adapts to individual preferences and needs—promoting comfort, productivity, and emotional well-being.
 
 ## 🌟 Features
 
-- **AI-Powered Auto-Scheduling**  
-  Automatically structures your day based on energy levels, preferences, and task priority.
+- **Personalized Light Environment**  
+  Tailors brightness, color temperature, and intensity based on sensory preferences.
 
-- **Built-In Alarms & Reminders**  
-  Get notified for every task, habit, or break with customizable alerts.
+- **Real-Time Adaptation**  
+  Adjusts lighting dynamically based on user input, time of day, or activity.
 
-- **Habit Tracker with Smart Feedback**  
-  Track your consistency and receive improvement suggestions from the AI assistant.
+- **User Feedback System**  
+  Collects and interprets feedback to learn preferences over time.
 
-- **Goal-Oriented Planning**  
-  Break long-term goals into small, achievable tasks and measure progress.
+- **Accessibility First Design**  
+  Built for neurodivergent users with simple, customizable UI options.
 
-- **Firebase Auth + Firestore Integration**  
-  Secure sign-in and real-time data syncing across devices.
+- **Firebase Integration**  
+  Stores user profiles and settings securely with cross-device syncing.
 
-- **Bluetooth & IoT Integration (In Progress)**  
-  Future support for smart devices to align your environment with your schedule.
-
+- **IoT Support (In Progress)**  
+  Supports smart light brands (e.g., Philips Hue, LIFX) via Bluetooth or Wi-Fi.
 
 ## 🛠️ Tech Stack
 
-- **Frontend:** React, Tailwind CSS  
-- **Backend:** Firebase (Authentication + Firestore)  
-- **Other:** Bluetooth Web API (in development), Google Calendar Sync (planned)
-
+- **Frontend**: React, Tailwind CSS  
+- **Backend**: Firebase (Auth, Firestore)  
+- **Other**: Bluetooth Web API, Smart Light APIs (in development)
 
 ## 🚀 Getting Started
 
