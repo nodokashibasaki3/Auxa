@@ -2,8 +2,6 @@
 
 **Auxa** is a smart habit-building and scheduling platform designed to help users take control of their routines using AI. Whether you're a student, professional, or goal-setter, Auxa helps you structure time, build habits, and reach milestones—intuitively and intelligently.
 
----
-
 ## 🌟 Features
 
 - **AI-Powered Auto-Scheduling**  
