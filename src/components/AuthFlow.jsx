@@ -1,8 +1,14 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { auth, db } from '../firebase';
+import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
+import { doc, setDoc, getDoc } from 'firebase/firestore';
+import { useNavigate } from 'react-router-dom';
 
-const AuthFlow = ({ onComplete }) => {
-  const [step, setStep] = useState('signin'); // signin, signup, profile
-  const [profileStep, setProfileStep] = useState(0); // 0: DOB, 1: Diagnosis, 2: Autism Type, 3: Light Sensitivity
+const AuthFlow = ({ onComplete, isEditing = false }) => {
+  const [step, setStep] = useState(isEditing ? 'profile' : 'signin');
+  const [profileStep, setProfileStep] = useState(0);
+  const [error, setError] = useState('');
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -11,7 +17,7 @@ const AuthFlow = ({ onComplete }) => {
     diagnosisType: '',
     autismType: '',
     selfDiagnosed: false,
-    lightSensitivity: 3
+    lightSensitivity: 1
   });
 
   const handleInputChange = (e) => {
@@ -22,42 +28,221 @@ const AuthFlow = ({ onComplete }) => {
     }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSignIn = async (e) => {
     e.preventDefault();
+    setError('');
+    
+    try {
+      const userCredential = await signInWithEmailAndPassword(auth, formData.email, formData.password);
+      const user = userCredential.user;
+      
+      // Fetch user profile from Firestore
+      const userDoc = await getDoc(doc(db, 'users', user.uid));
+      if (userDoc.exists()) {
+        onComplete(userDoc.data());
+      } else {
+        setError('User profile not found');
+      }
+    } catch (error) {
+      setError(error.message);
+    }
+  };
+
+  const handleSignUp = async (e) => {
+    e.preventDefault();
+    setError('');
+    
+    try {
+      const userCredential = await createUserWithEmailAndPassword(auth, formData.email, formData.password);
+      const user = userCredential.user;
+      
+      // Store initial user data
+      await setDoc(doc(db, 'users', user.uid), {
+        email: formData.email,
+        name: formData.name
+      });
+      
+      // Clear profile fields
+      setFormData(prev => ({
+        ...prev,
+        dateOfBirth: '',
+        diagnosisType: '',
+        autismType: '',
+        selfDiagnosed: false,
+        lightSensitivity: 1
+      }));
+      
+      // Move to profile setup
+      setStep('profile');
+      setProfileStep(0);
+    } catch (error) {
+      setError(error.message);
+    }
+  };
+
+  const handleProfileComplete = async () => {
+    try {
+      // Get the current user
+      let user = auth.currentUser;
+      
+      if (!user) {
+        // If no current user, try to sign in with existing credentials
+        const userCredential = await signInWithEmailAndPassword(auth, formData.email, formData.password);
+        user = userCredential.user;
+      }
+
+      if (!user) {
+        throw new Error('No user logged in');
+      }
+      
+      // Update the user's profile with all collected information
+      await setDoc(doc(db, 'users', user.uid), {
+        email: formData.email,
+        name: formData.name,
+        dateOfBirth: formData.dateOfBirth,
+        diagnosisType: formData.diagnosisType,
+        autismType: formData.autismType,
+        selfDiagnosed: formData.selfDiagnosed,
+        lightSensitivity: formData.lightSensitivity
+      }, { merge: true });
+      
+      // Call onComplete first to update the parent component's state
+      onComplete({
+        email: formData.email,
+        name: formData.name,
+        dateOfBirth: formData.dateOfBirth,
+        diagnosisType: formData.diagnosisType,
+        autismType: formData.autismType,
+        selfDiagnosed: formData.selfDiagnosed,
+        lightSensitivity: formData.lightSensitivity
+      });
+      
+      // Then navigate to dashboard
+      navigate('/dashboard');
+    } catch (error) {
+      console.error('Error in handleProfileComplete:', error);
+      setError(error.message);
+    }
+  };
+
+  // Load profile data when in edit mode
+  useEffect(() => {
+    if (isEditing) {
+      loadProfileData();
+    }
+  }, [isEditing]);
+
+  const loadProfileData = async () => {
+    try {
+      const user = auth.currentUser;
+      if (!user) {
+        throw new Error('No user logged in');
+      }
+
+      const userDoc = await getDoc(doc(db, 'users', user.uid));
+      if (userDoc.exists()) {
+        const data = userDoc.data();
+        setFormData(prev => ({
+          ...prev,
+          email: data.email || '',
+          name: data.name || '',
+          dateOfBirth: data.dateOfBirth || '',
+          diagnosisType: data.diagnosisType || '',
+          autismType: data.autismType || '',
+          selfDiagnosed: data.selfDiagnosed || false,
+          lightSensitivity: data.lightSensitivity || 1
+        }));
+      }
+    } catch (error) {
+      console.error('Error loading profile data:', error);
+      setError(error.message);
+    }
+  };
+
+  const handleEditProfile = async () => {
+    try {
+      const user = auth.currentUser;
+      if (!user) {
+        throw new Error('No user logged in');
+      }
+
+      // Update the user's profile with all collected information
+      await setDoc(doc(db, 'users', user.uid), {
+        email: formData.email,
+        name: formData.name,
+        dateOfBirth: formData.dateOfBirth,
+        diagnosisType: formData.diagnosisType,
+        autismType: formData.autismType,
+        selfDiagnosed: formData.selfDiagnosed,
+        lightSensitivity: formData.lightSensitivity
+      }, { merge: true });
+      
+      // Call onComplete to update the parent component's state
+      onComplete({
+        email: formData.email,
+        name: formData.name,
+        dateOfBirth: formData.dateOfBirth,
+        diagnosisType: formData.diagnosisType,
+        autismType: formData.autismType,
+        selfDiagnosed: formData.selfDiagnosed,
+        lightSensitivity: formData.lightSensitivity
+      });
+      
+      // Show success message
+      setError('Profile updated successfully!');
+      
+      // Navigate back to dashboard after a short delay
+      setTimeout(() => {
+        navigate('/dashboard');
+      }, 1500);
+    } catch (error) {
+      console.error('Error updating profile:', error);
+      setError(error.message);
+    }
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    console.log('handleSubmit called with step:', step, 'profileStep:', profileStep);
   
     if (step === 'signin') {
-      // Simulate fetching existing user data
-      const existingUser = {
-        email: formData.email,
-        password: formData.password,
-        name: 'Jane Doe',
-        dateOfBirth: '2000-01-01',
-        diagnosisType: 'professional',
-        autismType: 'aspergers',
-        selfDiagnosed: false,
-        lightSensitivity: 4
-      };
-  
-      setFormData(existingUser); // load into form
-      onComplete(existingUser); // skip profile setup for signed-in user
+      await handleSignIn(e);
     } else if (step === 'signup') {
-      // Empty profile steps start after sign up
-      setFormData((prev) => ({
-        ...prev,
-        email: prev.email,
-        password: prev.password
-      }));
-      setStep('profile');
+      await handleSignUp(e);
     } else if (step === 'profile') {
+      console.log('Handling profile step submission');
+      
+      // Validation for each profile step
+      if (profileStep === 0 && !formData.dateOfBirth) {
+        setError('Please enter your date of birth.');
+        return;
+      }
+      if (profileStep === 1 && !formData.diagnosisType) {
+        setError('Please select a diagnosis type.');
+        return;
+      }
+      if (profileStep === 2 && !formData.autismType) {
+        setError('Please select an autism type.');
+        return;
+      }
+      // Light sensitivity is always filled (default 1), so no need to validate step 3.
+  
+      setError(''); // Clear any old errors
+  
       if (profileStep < 3) {
-        setProfileStep(profileStep + 1);
+        console.log('Moving to next profile step');
+        setProfileStep(prev => prev + 1);
       } else {
-        onComplete(formData); // done with setup
+        console.log('Completing profile setup');
+        if (isEditing) {
+          await handleEditProfile();
+        } else {
+          await handleProfileComplete();
+        }
       }
     }
   };
   
-
   const handleBack = () => {
     if (profileStep > 0) {
       setProfileStep(profileStep - 1);
@@ -67,6 +252,7 @@ const AuthFlow = ({ onComplete }) => {
   const renderSignIn = () => (
     <div className="bg-white rounded-xl shadow-lg p-6 w-full">
       <h2 className="text-2xl font-bold text-indigo-600 mb-6">Welcome Back</h2>
+      {error && <div className="text-red-500 mb-4">{error}</div>}
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
@@ -113,6 +299,7 @@ const AuthFlow = ({ onComplete }) => {
   const renderSignUp = () => (
     <div className="bg-white rounded-xl shadow-lg p-6 w-full">
       <h2 className="text-2xl font-bold text-indigo-600 mb-6">Create Account</h2>
+      {error && <div className="text-red-500 mb-4">{error}</div>}
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
@@ -164,12 +351,13 @@ const AuthFlow = ({ onComplete }) => {
   );
 
   const renderProfileStep = () => {
+    console.log('renderProfileStep called with profileStep:', profileStep);
     const steps = [
       {
         title: "When were you born?",
         description: "This helps us personalize your experience",
         component: (
-          <div>
+          <div className="w-full">
             <input
               type="date"
               name="dateOfBirth"
@@ -185,7 +373,7 @@ const AuthFlow = ({ onComplete }) => {
         title: "How were you diagnosed?",
         description: "This information helps us tailor our recommendations",
         component: (
-          <div className="space-y-2">
+          <div className="space-y-2 w-full">
             <label className="flex items-center">
               <input
                 type="radio"
@@ -215,7 +403,7 @@ const AuthFlow = ({ onComplete }) => {
         title: "What type of autism do you have?",
         description: "This helps us understand your specific needs",
         component: (
-          <div>
+          <div className="w-full">
             <select
               name="autismType"
               value={formData.autismType}
@@ -236,7 +424,7 @@ const AuthFlow = ({ onComplete }) => {
         title: "How sensitive are you to bright lights?",
         description: "This helps us create the perfect lighting environment for you",
         component: (
-          <div>
+          <div className="w-full">
             <input
               type="range"
               name="lightSensitivity"
@@ -256,15 +444,20 @@ const AuthFlow = ({ onComplete }) => {
     ];
 
     const currentStep = steps[profileStep];
+    console.log('Current step data:', currentStep);
 
     return (
-      <div className="bg-white rounded-xl shadow-lg p-6 w-full">
+      <div className="bg-white rounded-xl shadow-lg p-6 w-full max-w-md mx-auto">
         <div className="mb-2 text-sm text-indigo-600">Step {profileStep + 1} of {steps.length}</div>
         <h2 className="text-2xl font-bold text-indigo-600 mb-2">{currentStep.title}</h2>
         <p className="text-sm text-gray-600 mb-6">{currentStep.description}</p>
         
+        {error && <div className="text-red-500 mb-4">{error}</div>}
+
         <form onSubmit={handleSubmit} className="space-y-6">
-          {currentStep.component}
+          <div className="w-full">
+            {currentStep.component}
+          </div>
           
           <div className="flex justify-between pt-4">
             {profileStep > 0 && (
@@ -280,7 +473,7 @@ const AuthFlow = ({ onComplete }) => {
               type="submit" 
               className="ml-auto bg-indigo-600 text-white py-2 px-6 rounded-lg font-medium"
             >
-              {profileStep === steps.length - 1 ? 'Complete' : 'Next'}
+              {profileStep === steps.length - 1 ? (isEditing ? 'Save Changes' : 'Complete') : 'Next'}
             </button>
           </div>
         </form>
@@ -289,11 +482,15 @@ const AuthFlow = ({ onComplete }) => {
   };
 
   return (
-    <div className="flex flex-col items-center w-full h-full bg-gray-100 p-4">
-      <div className="max-w-md w-full">
+    <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100 p-4">
+      <div className="w-full max-w-md">
         {step === 'signin' && renderSignIn()}
         {step === 'signup' && renderSignUp()}
-        {step === 'profile' && renderProfileStep()}
+        {step === 'profile' && (
+          <div className="animate-fade-in">
+            {renderProfileStep()}
+          </div>
+        )}
       </div>
     </div>
   );

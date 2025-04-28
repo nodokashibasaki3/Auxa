@@ -1,4 +1,7 @@
 import React, { useState } from 'react';
+import { auth } from '../firebase';
+import { signOut } from 'firebase/auth';
+import { useNavigate } from 'react-router-dom';
 
 const AuxaAppMockup = ({ userProfile }) => {
   const [activeTab, setActiveTab] = useState('home');
@@ -15,6 +18,8 @@ const AuxaAppMockup = ({ userProfile }) => {
   
   const [newDevice, setNewDevice] = useState({ name: '', type: 'light' });
 
+  const navigate = useNavigate();
+
   // Simulate heart rate changes
   React.useEffect(() => {
     const interval = setInterval(() => {
@@ -27,6 +32,14 @@ const AuxaAppMockup = ({ userProfile }) => {
     
     return () => clearInterval(interval);
   }, []);
+
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+    } catch (error) {
+      console.error('Error signing out:', error);
+    }
+  };
 
   const renderProfile = () => (
     <div className="bg-white rounded-xl shadow-lg p-6 w-full">
@@ -67,9 +80,17 @@ const AuxaAppMockup = ({ userProfile }) => {
         </div>
       </div>
       
-      <button className="mt-6 w-full bg-indigo-600 text-white py-2 rounded-lg font-medium">
-        Edit Profile
-      </button>
+      <div className="mt-6 space-y-3">
+        <button onClick={() => navigate('/settings')} className="w-full bg-indigo-600 text-white py-2 rounded-lg font-medium">
+          Profile Settings
+        </button>
+        <button 
+          onClick={handleLogout}
+          className="w-full bg-red-600 text-white py-2 rounded-lg font-medium hover:bg-red-700 transition"
+        >
+          Log Out
+        </button>
+      </div>
     </div>
   );
 
