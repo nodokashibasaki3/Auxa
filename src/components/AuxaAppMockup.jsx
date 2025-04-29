@@ -10,13 +10,10 @@ const AuxaAppMockup = ({ userProfile }) => {
   const [isHeartRateConnected, setIsHeartRateConnected] = useState(false);
   const [isSmartLightsConnected, setIsSmartLightsConnected] = useState(false);
   const [showAddDeviceModal, setShowAddDeviceModal] = useState(false);
-  const [devices, setDevices] = useState(
-    process.env.REACT_APP_IS_DEMO === 'true'
-      ? [{ id: 1, name: 'Philips Hue', type: 'light', icon: '💡', connected: true }]
-      : []
-  );
-  
+  const [devices, setDevices] = useState([]);
   const [newDevice, setNewDevice] = useState({ name: '', type: 'light' });
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const [deviceMenuOpen, setDeviceMenuOpen] = useState(false);
 
   const navigate = useNavigate();
 
@@ -35,7 +32,8 @@ const AuxaAppMockup = ({ userProfile }) => {
 
   const handleLogout = async () => {
     try {
-      await signOut(auth);
+      await auth.signOut();
+      navigate('/');
     } catch (error) {
       console.error('Error signing out:', error);
     }
