@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { auth } from '../firebase';
 import { signOut } from 'firebase/auth';
 import { useNavigate } from 'react-router-dom';
+import BluetoothManager from '../utils/BluetoothManager';
 
 const AuxaAppMockup = ({ userProfile }) => {
   const [activeTab, setActiveTab] = useState('home');
@@ -18,26 +19,32 @@ const AuxaAppMockup = ({ userProfile }) => {
   const navigate = useNavigate();
 
   // Simulate heart rate changes
-  React.useEffect(() => {
+  useEffect(() => {
+    let isSubscribed = true;
     const interval = setInterval(() => {
-      setHeartRate(prev => {
-        // Simulate small random fluctuations
-        const change = Math.floor(Math.random() * 5) - 2;
-        return Math.max(60, Math.min(100, prev + change));
-      });
+      if (isSubscribed) {
+        setHeartRate(prev => {
+          // Simulate small random fluctuations
+          const change = Math.floor(Math.random() * 5) - 2;
+          return Math.max(60, Math.min(100, prev + change));
+        });
+      }
     }, 3000);
     
-    return () => clearInterval(interval);
+    return () => {
+      isSubscribed = false;
+      clearInterval(interval);
+    };
   }, []);
 
-  const handleLogout = async () => {
+  const handleLogout = useCallback(async () => {
     try {
-      await auth.signOut();
+      await signOut(auth);
       navigate('/');
     } catch (error) {
       console.error('Error signing out:', error);
     }
-  };
+  }, [navigate]);
 
   const renderProfile = () => (
     <div className="bg-white rounded-xl shadow-lg p-6 w-full">
@@ -79,8 +86,11 @@ const AuxaAppMockup = ({ userProfile }) => {
       </div>
       
       <div className="mt-6 space-y-3">
-        <button onClick={() => navigate('/settings')} className="w-full bg-indigo-600 text-white py-2 rounded-lg font-medium">
+        <button onClick={() => navigate('/profile?edit=true')} className="w-full bg-indigo-600 text-white py-2 rounded-lg font-medium">
           Profile Settings
+        </button>
+        <button onClick={() => navigate('/health')} className="w-full bg-indigo-600 text-white py-2 rounded-lg font-medium">
+          Health Tracking
         </button>
         <button 
           onClick={handleLogout}
@@ -144,118 +154,207 @@ const AuxaAppMockup = ({ userProfile }) => {
     </div>
   );
 
-  const connectToBluetoothDevice = async () => {
+  const connectToBluetoothDevice = useCallback(async () => {
     try {
-      const device = await navigator.bluetooth.requestDevice({
-        acceptAllDevices: true,
-        optionalServices: ['battery_service'] // You can add UUIDs here
-      });
-  
-      const newConnectedDevice = {
-        id: device.id || Date.now(),
-        name: device.name || 'Unknown Device',
-        type: 'other',
-        icon: '🔌',
-        connected: true
-      };
-  
-      setDevices([...devices, newConnectedDevice]);
-      setShowAddDeviceModal(false);
+      // Check if we're on iOS
+      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+      
+      if (isIOS) {
+        // For iOS, we'll use the native Bluetooth manager
+        const isEnabled = await BluetoothManager.isBluetoothEnabled();
+        if (!isEnabled) {
+          throw new Error('Please enable Bluetooth in your device settings');
+        }
+
+        // Start scanning for devices
+        await BluetoothManager.startScanning((device) => {
+          const newConnectedDevice = {
+            id: device.id,
+            name: device.name || 'Unknown Device',
+            type: 'bluetooth',
+            connected: true
+          };
+          
+          setDevices(prevDevices => [...prevDevices, newConnectedDevice]);
+        });
+
+        // Stop scanning after 10 seconds
+        setTimeout(() => {
+          BluetoothManager.stopScanning();
+        }, 10000);
+
+        setShowAddDeviceModal(false);
+        setIsBluetoothConnected(true);
+      } else {
+        // Android Web Bluetooth implementation
+        if (!navigator.bluetooth) {
+          throw new Error('Web Bluetooth API is not available in this browser.');
+        }
+
+        const device = await navigator.bluetooth.requestDevice({
+          acceptAllDevices: true,
+          optionalServices: ['heart_rate']
+        });
+    
+        const newConnectedDevice = {
+          id: device.id || Date.now(),
+          name: device.name || 'Unknown Device',
+          type: 'bluetooth',
+          connected: true
+        };
+    
+        setDevices(prevDevices => [...prevDevices, newConnectedDevice]);
+        setShowAddDeviceModal(false);
+        setIsBluetoothConnected(true);
+      }
     } catch (error) {
       console.error('Bluetooth connection failed:', error);
-      alert('Failed to connect to device.');
+      alert(error.message || 'Failed to connect to device. Please ensure Bluetooth is enabled and try again.');
     }
-  };  
+  }, []);
 
-  const renderBluetoothSection = () => (
-    <div className="bg-white rounded-2xl shadow-xl p-6 w-full max-w-2xl mx-auto">
-      {/* Header */}
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-xl font-semibold text-gray-800">Bluetooth Devices</h2>
-        <button 
-          className="text-sm bg-indigo-600 hover:bg-indigo-700 text-white py-1.5 px-4 rounded-full transition"
-          onClick={() => setShowAddDeviceModal(true)}
-        >
-          + Add Device
-        </button>
-      </div>
+  const renderBluetoothSection = () => {
+    // Check if app is running as a PWA
+    const isPWA = window.matchMedia('(display-mode: standalone)').matches || 
+                 window.navigator.standalone || 
+                 document.referrer.includes('android-app://');
+
+    // Check if we're on iOS
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+
+    return (
+      <div className="space-y-6">
+        <div className="flex justify-between items-center">
+          <h2 className="text-xl font-semibold text-gray-800">Bluetooth Devices</h2>
+          <button 
+            className="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition"
+            onClick={() => setShowAddDeviceModal(true)}
+          >
+            + Add Device
+          </button>
+        </div>
   
-      {/* Device List */}
-      <div className="space-y-4">
-        {devices.length === 0 ? (
-          <div className="text-center text-gray-500 text-sm italic py-4">No devices connected.</div>
-        ) : (
-          devices.map(device => (
-            <div key={device.id} className="bg-gray-50 p-4 rounded-xl flex items-center shadow-sm">
-              <div className="h-10 w-10 flex items-center justify-center text-lg mr-4">
-                <span>{device.icon}</span>
-              </div>
-              <div className="flex-grow">
-                <div className="text-base font-medium text-gray-800">{device.name}</div>
-                <div className="text-sm text-gray-500">
-                  {device.connected ? 'Connected' : `Tap to connect your ${device.type}`}
-                </div>
-              </div>
-              <button 
-                className={`text-xs font-medium py-1.5 px-4 rounded-full transition ${
-                  device.connected 
-                    ? 'bg-gray-200 text-gray-600'
-                    : 'bg-indigo-600 text-white hover:bg-indigo-700'
-                }`}
-                onClick={() => {
-                  const updatedDevices = devices.map(d => 
-                    d.id === device.id ? { ...d, connected: !d.connected } : d
-                  );
-                  setDevices(updatedDevices);
-                }}
-              >
-                {device.connected ? 'Connected' : 'Connect'}
-              </button>
+        {/* Device List */}
+        <div className="space-y-4">
+          {devices.length === 0 ? (
+            <div className="text-center text-gray-500 text-sm italic py-4">
+              No devices connected.
             </div>
-          ))
-        )}
-      </div>
+          ) : (
+            devices.map(device => (
+              <div key={device.id} className="bg-gray-50 p-4 rounded-xl flex items-center shadow-sm">
+                <div className="flex-1">
+                  <div className="text-base font-medium text-gray-800">{device.name}</div>
+                  <div className="text-sm text-gray-500">
+                    {device.connected ? 'Connected' : `Tap to connect your ${device.type}`}
+                  </div>
+                </div>
+                <button 
+                  className={`px-4 py-2 rounded-lg ${
+                    device.connected 
+                      ? 'bg-green-100 text-green-800'
+                      : 'bg-indigo-100 text-indigo-800'
+                  }`}
+                  onClick={async () => {
+                    try {
+                      if (device.connected) {
+                        await BluetoothManager.disconnectDevice(device.id);
+                      } else {
+                        await BluetoothManager.connectToDevice(device.id);
+                      }
+                      const updatedDevices = devices.map(d => 
+                        d.id === device.id ? { ...d, connected: !d.connected } : d
+                      );
+                      setDevices(updatedDevices);
+                    } catch (error) {
+                      console.error('Device connection error:', error);
+                      alert('Failed to connect/disconnect device. Please try again.');
+                    }
+                  }}
+                >
+                  {device.connected ? 'Connected' : 'Connect'}
+                </button>
+              </div>
+            ))
+          )}
+        </div>
   
-      {/* Bluetooth Status */}
-      <div className="mt-6 pt-4 border-t border-gray-200 flex items-center justify-between">
-        <div className="flex items-center space-x-2">
+        {/* Bluetooth Status */}
+        <div className="flex items-center space-x-4">
           <div className={`h-3 w-3 rounded-full ${isBluetoothConnected ? 'bg-green-500' : 'bg-red-500'}`}></div>
           <span className="text-sm font-medium text-gray-700">Bluetooth</span>
+          <button 
+            className="ml-auto text-sm text-indigo-600 hover:text-indigo-800"
+            onClick={async () => {
+              try {
+                const isEnabled = await BluetoothManager.isBluetoothEnabled();
+                if (!isEnabled) {
+                  alert('Please enable Bluetooth in your device settings');
+                  return;
+                }
+                setIsBluetoothConnected(!isBluetoothConnected);
+              } catch (error) {
+                console.error('Bluetooth state error:', error);
+                alert('Failed to toggle Bluetooth. Please check your device settings.');
+              }
+            }}
+          >
+            {isBluetoothConnected ? 'Turn Off' : 'Turn On'}
+          </button>
         </div>
-        <button 
-          className="text-sm text-indigo-600 hover:text-indigo-700 font-medium transition"
-          onClick={() => setIsBluetoothConnected(!isBluetoothConnected)}
-        >
-          {isBluetoothConnected ? 'Turn Off' : 'Turn On'}
-        </button>
-      </div>
   
-      {/* Add Device Modal */}
-      {showAddDeviceModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center px-4">
-          <div className="bg-white rounded-2xl shadow-xl p-6 w-full max-w-md animate-fade-in">
-            <h3 className="text-lg font-semibold mb-4 text-gray-800">Scan & Add New Bluetooth Device</h3>
-            <p className="text-sm text-gray-500 mb-6">Click below to scan for nearby devices using Bluetooth.</p>
-  
-            <div className="flex justify-end space-x-3">
-              <button
-                className="px-4 py-2 text-sm font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-full"
-                onClick={() => setShowAddDeviceModal(false)}
-              >
-                Cancel
-              </button>
-              <button
-                className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-full transition"
-                onClick={connectToBluetoothDevice}
-              >
-                Scan Devices
-              </button>
+        {/* Add Device Modal */}
+        {showAddDeviceModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
+            <div className="bg-white rounded-xl p-6 max-w-md w-full">
+              <h3 className="text-lg font-semibold mb-4 text-gray-800">Connect Your Device</h3>
+              {isIOS ? (
+                <div className="space-y-4">
+                  <p className="text-sm text-gray-500">
+                    Click below to scan for nearby Bluetooth devices.
+                  </p>
+                  <div className="flex space-x-4">
+                    <button
+                      className="flex-1 bg-gray-200 text-gray-800 px-4 py-2 rounded-lg hover:bg-gray-300 transition"
+                      onClick={() => setShowAddDeviceModal(false)}
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      className="flex-1 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition"
+                      onClick={connectToBluetoothDevice}
+                    >
+                      Scan Devices
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  <p className="text-sm text-gray-500">
+                    Click below to scan for nearby Bluetooth devices.
+                  </p>
+                  <div className="flex space-x-4">
+                    <button
+                      className="flex-1 bg-gray-200 text-gray-800 px-4 py-2 rounded-lg hover:bg-gray-300 transition"
+                      onClick={() => setShowAddDeviceModal(false)}
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      className="flex-1 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition"
+                      onClick={connectToBluetoothDevice}
+                    >
+                      Scan Devices
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
-        </div>
-      )}
-    </div>
-  );
+        )}
+      </div>
+    );
+  };
   
 
   return (
