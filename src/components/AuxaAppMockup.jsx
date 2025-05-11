@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { auth } from '../firebase';
 import { signOut } from 'firebase/auth';
 import { useNavigate } from 'react-router-dom';
@@ -18,26 +18,32 @@ const AuxaAppMockup = ({ userProfile }) => {
   const navigate = useNavigate();
 
   // Simulate heart rate changes
-  React.useEffect(() => {
+  useEffect(() => {
+    let isSubscribed = true;
     const interval = setInterval(() => {
-      setHeartRate(prev => {
-        // Simulate small random fluctuations
-        const change = Math.floor(Math.random() * 5) - 2;
-        return Math.max(60, Math.min(100, prev + change));
-      });
+      if (isSubscribed) {
+        setHeartRate(prev => {
+          // Simulate small random fluctuations
+          const change = Math.floor(Math.random() * 5) - 2;
+          return Math.max(60, Math.min(100, prev + change));
+        });
+      }
     }, 3000);
     
-    return () => clearInterval(interval);
+    return () => {
+      isSubscribed = false;
+      clearInterval(interval);
+    };
   }, []);
 
-  const handleLogout = async () => {
+  const handleLogout = useCallback(async () => {
     try {
-      await auth.signOut();
+      await signOut(auth);
       navigate('/');
     } catch (error) {
       console.error('Error signing out:', error);
     }
-  };
+  }, [navigate]);
 
   const renderProfile = () => (
     <div className="bg-white rounded-xl shadow-lg p-6 w-full">
@@ -79,8 +85,11 @@ const AuxaAppMockup = ({ userProfile }) => {
       </div>
       
       <div className="mt-6 space-y-3">
-        <button onClick={() => navigate('/settings')} className="w-full bg-indigo-600 text-white py-2 rounded-lg font-medium">
+        <button onClick={() => navigate('/profile?edit=true')} className="w-full bg-indigo-600 text-white py-2 rounded-lg font-medium">
           Profile Settings
+        </button>
+        <button onClick={() => navigate('/health')} className="w-full bg-indigo-600 text-white py-2 rounded-lg font-medium">
+          Health Tracking
         </button>
         <button 
           onClick={handleLogout}
@@ -144,36 +153,58 @@ const AuxaAppMockup = ({ userProfile }) => {
     </div>
   );
 
-  const connectToBluetoothDevice = async () => {
+  const connectToBluetoothDevice = useCallback(async () => {
     try {
+      // Check if Web Bluetooth API is available
+      if (!navigator.bluetooth) {
+        throw new Error('Web Bluetooth API is not available in this browser.');
+      }
+
+      // Check if we're on iOS
+      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+      if (isIOS) {
+        // On iOS, we can't use Web Bluetooth API
+        // Instead, we'll show a message about using the native app
+        setShowAddDeviceModal(true);
+        return;
+      }
+
       const device = await navigator.bluetooth.requestDevice({
         acceptAllDevices: true,
-        optionalServices: ['battery_service'] // You can add UUIDs here
+        optionalServices: ['heart_rate']
       });
   
       const newConnectedDevice = {
         id: device.id || Date.now(),
         name: device.name || 'Unknown Device',
-        type: 'other',
-        icon: '🔌',
+        type: 'bluetooth',
         connected: true
       };
   
-      setDevices([...devices, newConnectedDevice]);
+      setDevices(prevDevices => [...prevDevices, newConnectedDevice]);
       setShowAddDeviceModal(false);
+      setIsBluetoothConnected(true);
     } catch (error) {
       console.error('Bluetooth connection failed:', error);
-      alert('Failed to connect to device.');
+      alert(error.message || 'Failed to connect to device. Please ensure Bluetooth is enabled and try again.');
     }
-  };  
+  }, []);
 
-  const renderBluetoothSection = () => (
-    <div className="bg-white rounded-2xl shadow-xl p-6 w-full max-w-2xl mx-auto">
-      {/* Header */}
-      <div className="flex justify-between items-center mb-6">
+  const renderBluetoothSection = () => {
+    // Check if app is running as a PWA
+    const isPWA = window.matchMedia('(display-mode: standalone)').matches || 
+                 window.navigator.standalone || 
+                 document.referrer.includes('android-app://');
+
+    // Check if we're on iOS
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+
+    return (
+      <div className="space-y-6">
+        <div className="flex justify-between items-center">
         <h2 className="text-xl font-semibold text-gray-800">Bluetooth Devices</h2>
         <button 
-          className="text-sm bg-indigo-600 hover:bg-indigo-700 text-white py-1.5 px-4 rounded-full transition"
+            className="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition"
           onClick={() => setShowAddDeviceModal(true)}
         >
           + Add Device
@@ -183,24 +214,23 @@ const AuxaAppMockup = ({ userProfile }) => {
       {/* Device List */}
       <div className="space-y-4">
         {devices.length === 0 ? (
-          <div className="text-center text-gray-500 text-sm italic py-4">No devices connected.</div>
+            <div className="text-center text-gray-500 text-sm italic py-4">
+              No devices connected.
+            </div>
         ) : (
           devices.map(device => (
             <div key={device.id} className="bg-gray-50 p-4 rounded-xl flex items-center shadow-sm">
-              <div className="h-10 w-10 flex items-center justify-center text-lg mr-4">
-                <span>{device.icon}</span>
-              </div>
-              <div className="flex-grow">
+                <div className="flex-1">
                 <div className="text-base font-medium text-gray-800">{device.name}</div>
                 <div className="text-sm text-gray-500">
                   {device.connected ? 'Connected' : `Tap to connect your ${device.type}`}
                 </div>
               </div>
               <button 
-                className={`text-xs font-medium py-1.5 px-4 rounded-full transition ${
+                  className={`px-4 py-2 rounded-lg ${
                   device.connected 
-                    ? 'bg-gray-200 text-gray-600'
-                    : 'bg-indigo-600 text-white hover:bg-indigo-700'
+                      ? 'bg-green-100 text-green-800'
+                      : 'bg-indigo-100 text-indigo-800'
                 }`}
                 onClick={() => {
                   const updatedDevices = devices.map(d => 
@@ -217,13 +247,11 @@ const AuxaAppMockup = ({ userProfile }) => {
       </div>
   
       {/* Bluetooth Status */}
-      <div className="mt-6 pt-4 border-t border-gray-200 flex items-center justify-between">
-        <div className="flex items-center space-x-2">
+        <div className="flex items-center space-x-4">
           <div className={`h-3 w-3 rounded-full ${isBluetoothConnected ? 'bg-green-500' : 'bg-red-500'}`}></div>
           <span className="text-sm font-medium text-gray-700">Bluetooth</span>
-        </div>
         <button 
-          className="text-sm text-indigo-600 hover:text-indigo-700 font-medium transition"
+            className="ml-auto text-sm text-indigo-600 hover:text-indigo-800"
           onClick={() => setIsBluetoothConnected(!isBluetoothConnected)}
         >
           {isBluetoothConnected ? 'Turn Off' : 'Turn On'}
@@ -232,30 +260,85 @@ const AuxaAppMockup = ({ userProfile }) => {
   
       {/* Add Device Modal */}
       {showAddDeviceModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center px-4">
-          <div className="bg-white rounded-2xl shadow-xl p-6 w-full max-w-md animate-fade-in">
-            <h3 className="text-lg font-semibold mb-4 text-gray-800">Scan & Add New Bluetooth Device</h3>
-            <p className="text-sm text-gray-500 mb-6">Click below to scan for nearby devices using Bluetooth.</p>
-  
-            <div className="flex justify-end space-x-3">
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
+            <div className="bg-white rounded-xl p-6 max-w-md w-full">
+              <h3 className="text-lg font-semibold mb-4 text-gray-800">Connect Your Device</h3>
+              {isIOS ? (
+                <div className="space-y-4">
+                  {isPWA ? (
+                    <div className="text-center py-4">
+                      <p className="text-sm text-gray-500 mb-4">
+                        To use Bluetooth devices with Auxa on iOS, please download our native app from the App Store.
+                      </p>
+                      <div className="space-y-2">
+                        <button
+                          className="w-full bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition"
+                          onClick={() => {
+                            // Replace with your App Store URL
+                            window.location.href = 'https://apps.apple.com/app/your-app-id';
+                          }}
+                        >
+                          Download iOS App
+                        </button>
+                        <button
+                          className="w-full bg-gray-200 text-gray-800 px-4 py-2 rounded-lg hover:bg-gray-300 transition"
+                          onClick={() => setShowAddDeviceModal(false)}
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <>
+                      <p className="text-sm text-gray-500">
+                        To use Bluetooth devices with Auxa:
+                      </p>
+                      <div className="space-y-2">
+                        <div className="flex items-start space-x-2">
+                          <span className="text-indigo-600">1.</span>
+                          <div>
+                            <p className="text-sm font-medium">Add to Home Screen</p>
+                            <p className="text-xs text-gray-500">Tap Share → Add to Home Screen</p>
+                          </div>
+                        </div>
+                        <div className="flex items-start space-x-2">
+                          <span className="text-indigo-600">2.</span>
+                          <div>
+                            <p className="text-sm font-medium">Download iOS App</p>
+                            <p className="text-xs text-gray-500">Get full Bluetooth support from the App Store</p>
+                          </div>
+                        </div>
+                      </div>
+                    </>
+                  )}
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  <p className="text-sm text-gray-500">
+                    Click below to scan for nearby Bluetooth devices.
+                  </p>
+                  <div className="flex space-x-4">
               <button
-                className="px-4 py-2 text-sm font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-full"
+                      className="flex-1 bg-gray-200 text-gray-800 px-4 py-2 rounded-lg hover:bg-gray-300 transition"
                 onClick={() => setShowAddDeviceModal(false)}
               >
                 Cancel
               </button>
               <button
-                className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-full transition"
+                      className="flex-1 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition"
                 onClick={connectToBluetoothDevice}
               >
                 Scan Devices
               </button>
             </div>
+                </div>
+              )}
           </div>
         </div>
       )}
     </div>
   );
+  };
   
 
   return (
