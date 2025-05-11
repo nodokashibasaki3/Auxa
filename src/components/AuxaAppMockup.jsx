@@ -156,6 +156,7 @@ const AuxaAppMockup = ({ userProfile }) => {
 
   const connectToBluetoothDevice = useCallback(async () => {
     try {
+<<<<<<< HEAD
       // Check if we're on iOS
       const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
       
@@ -207,6 +208,37 @@ const AuxaAppMockup = ({ userProfile }) => {
         setShowAddDeviceModal(false);
         setIsBluetoothConnected(true);
       }
+=======
+      // Check if Web Bluetooth API is available
+      if (!navigator.bluetooth) {
+        throw new Error('Web Bluetooth API is not available in this browser.');
+      }
+
+      // Check if we're on iOS
+      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+      if (isIOS) {
+        // On iOS, we can't use Web Bluetooth API
+        // Instead, we'll show a message about using the native app
+        setShowAddDeviceModal(true);
+        return;
+      }
+
+      const device = await navigator.bluetooth.requestDevice({
+        acceptAllDevices: true,
+        optionalServices: ['heart_rate']
+      });
+  
+      const newConnectedDevice = {
+        id: device.id || Date.now(),
+        name: device.name || 'Unknown Device',
+        type: 'bluetooth',
+        connected: true
+      };
+  
+      setDevices(prevDevices => [...prevDevices, newConnectedDevice]);
+      setShowAddDeviceModal(false);
+      setIsBluetoothConnected(true);
+>>>>>>> origin/main
     } catch (error) {
       console.error('Bluetooth connection failed:', error);
       alert(error.message || 'Failed to connect to device. Please ensure Bluetooth is enabled and try again.');
@@ -225,6 +257,7 @@ const AuxaAppMockup = ({ userProfile }) => {
     return (
       <div className="space-y-6">
         <div className="flex justify-between items-center">
+<<<<<<< HEAD
           <h2 className="text-xl font-semibold text-gray-800">Bluetooth Devices</h2>
           <button 
             className="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition"
@@ -239,6 +272,47 @@ const AuxaAppMockup = ({ userProfile }) => {
           {devices.length === 0 ? (
             <div className="text-center text-gray-500 text-sm italic py-4">
               No devices connected.
+=======
+        <h2 className="text-xl font-semibold text-gray-800">Bluetooth Devices</h2>
+        <button 
+            className="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition"
+          onClick={() => setShowAddDeviceModal(true)}
+        >
+          + Add Device
+        </button>
+      </div>
+  
+      {/* Device List */}
+      <div className="space-y-4">
+        {devices.length === 0 ? (
+            <div className="text-center text-gray-500 text-sm italic py-4">
+              No devices connected.
+            </div>
+        ) : (
+          devices.map(device => (
+            <div key={device.id} className="bg-gray-50 p-4 rounded-xl flex items-center shadow-sm">
+                <div className="flex-1">
+                <div className="text-base font-medium text-gray-800">{device.name}</div>
+                <div className="text-sm text-gray-500">
+                  {device.connected ? 'Connected' : `Tap to connect your ${device.type}`}
+                </div>
+              </div>
+              <button 
+                  className={`px-4 py-2 rounded-lg ${
+                  device.connected 
+                      ? 'bg-green-100 text-green-800'
+                      : 'bg-indigo-100 text-indigo-800'
+                }`}
+                onClick={() => {
+                  const updatedDevices = devices.map(d => 
+                    d.id === device.id ? { ...d, connected: !d.connected } : d
+                  );
+                  setDevices(updatedDevices);
+                }}
+              >
+                {device.connected ? 'Connected' : 'Connect'}
+              </button>
+>>>>>>> origin/main
             </div>
           ) : (
             devices.map(device => (
@@ -279,6 +353,7 @@ const AuxaAppMockup = ({ userProfile }) => {
           )}
         </div>
   
+<<<<<<< HEAD
         {/* Bluetooth Status */}
         <div className="flex items-center space-x-4">
           <div className={`h-3 w-3 rounded-full ${isBluetoothConnected ? 'bg-green-500' : 'bg-red-500'}`}></div>
@@ -305,11 +380,28 @@ const AuxaAppMockup = ({ userProfile }) => {
   
         {/* Add Device Modal */}
         {showAddDeviceModal && (
+=======
+      {/* Bluetooth Status */}
+        <div className="flex items-center space-x-4">
+          <div className={`h-3 w-3 rounded-full ${isBluetoothConnected ? 'bg-green-500' : 'bg-red-500'}`}></div>
+          <span className="text-sm font-medium text-gray-700">Bluetooth</span>
+        <button 
+            className="ml-auto text-sm text-indigo-600 hover:text-indigo-800"
+          onClick={() => setIsBluetoothConnected(!isBluetoothConnected)}
+        >
+          {isBluetoothConnected ? 'Turn Off' : 'Turn On'}
+        </button>
+      </div>
+  
+      {/* Add Device Modal */}
+      {showAddDeviceModal && (
+>>>>>>> origin/main
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
             <div className="bg-white rounded-xl p-6 max-w-md w-full">
               <h3 className="text-lg font-semibold mb-4 text-gray-800">Connect Your Device</h3>
               {isIOS ? (
                 <div className="space-y-4">
+<<<<<<< HEAD
                   <p className="text-sm text-gray-500">
                     Click below to scan for nearby Bluetooth devices.
                   </p>
@@ -327,6 +419,54 @@ const AuxaAppMockup = ({ userProfile }) => {
                       Scan Devices
                     </button>
                   </div>
+=======
+                  {isPWA ? (
+                    <div className="text-center py-4">
+                      <p className="text-sm text-gray-500 mb-4">
+                        To use Bluetooth devices with Auxa on iOS, please download our native app from the App Store.
+                      </p>
+                      <div className="space-y-2">
+                        <button
+                          className="w-full bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition"
+                          onClick={() => {
+                            // Replace with your App Store URL
+                            window.location.href = 'https://apps.apple.com/app/your-app-id';
+                          }}
+                        >
+                          Download iOS App
+                        </button>
+                        <button
+                          className="w-full bg-gray-200 text-gray-800 px-4 py-2 rounded-lg hover:bg-gray-300 transition"
+                          onClick={() => setShowAddDeviceModal(false)}
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <>
+                      <p className="text-sm text-gray-500">
+                        To use Bluetooth devices with Auxa:
+                      </p>
+                      <div className="space-y-2">
+                        <div className="flex items-start space-x-2">
+                          <span className="text-indigo-600">1.</span>
+                          <div>
+                            <p className="text-sm font-medium">Add to Home Screen</p>
+                            <p className="text-xs text-gray-500">Tap Share → Add to Home Screen</p>
+                          </div>
+                        </div>
+                        <div className="flex items-start space-x-2">
+                          <span className="text-indigo-600">2.</span>
+                          <div>
+                            <p className="text-sm font-medium">Download iOS App</p>
+                            <p className="text-xs text-gray-500">Get full Bluetooth support from the App Store</p>
+                          </div>
+                        </div>
+                      </div>
+                    </>
+                  )}
+>>>>>>> origin/main
                 </div>
               ) : (
                 <div className="space-y-4">
@@ -334,6 +474,7 @@ const AuxaAppMockup = ({ userProfile }) => {
                     Click below to scan for nearby Bluetooth devices.
                   </p>
                   <div className="flex space-x-4">
+<<<<<<< HEAD
                     <button
                       className="flex-1 bg-gray-200 text-gray-800 px-4 py-2 rounded-lg hover:bg-gray-300 transition"
                       onClick={() => setShowAddDeviceModal(false)}
@@ -349,11 +490,34 @@ const AuxaAppMockup = ({ userProfile }) => {
                   </div>
                 </div>
               )}
+=======
+              <button
+                      className="flex-1 bg-gray-200 text-gray-800 px-4 py-2 rounded-lg hover:bg-gray-300 transition"
+                onClick={() => setShowAddDeviceModal(false)}
+              >
+                Cancel
+              </button>
+              <button
+                      className="flex-1 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition"
+                onClick={connectToBluetoothDevice}
+              >
+                Scan Devices
+              </button>
+>>>>>>> origin/main
             </div>
+                </div>
+              )}
           </div>
+<<<<<<< HEAD
         )}
       </div>
     );
+=======
+        </div>
+      )}
+    </div>
+  );
+>>>>>>> origin/main
   };
   
 
